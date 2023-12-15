@@ -16,7 +16,8 @@ def _pair(x: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
 def extract_tensor_patches(
     input: Tensor,
     window_size: Union[int, Tuple[int, int]],
-    stride: Union[int, Tuple[int, int]] = 1
+    stride: Union[int, Tuple[int, int]] = 1,
+    pad_mode: str = "reflect"
 ) -> Tensor:
     if not torch.is_tensor(input):
         raise TypeError(f"Input input type is not a Tensor. Got {type(input)}")
@@ -32,11 +33,11 @@ def extract_tensor_patches(
 
     # Pad image so that it's dimensions are divisible by the window size
     (b, c, h, w) = input.shape
+    
     pad_h = window_size[0] - (h % window_size[0])
     pad_w = window_size[1] - (w % window_size[1])
 
-    input_ = F.pad(input.clone(), (0, pad_w, 0, pad_h), mode="reflect")
-    
+    input_ = F.pad(input.clone(), (0, pad_w, 0, pad_h), mode=pad_mode)
     return input_
 
 def combine_tensor_patches(
@@ -61,7 +62,6 @@ def combine_tensor_patches(
     
     folded = F.fold(patches, output_size=size_after_padding, kernel_size=window_size, stride=stride)
     counts = F.fold(torch.ones_like(patches), output_size=size_after_padding, kernel_size=window_size, stride=stride)
-
 
     (h, w) = original_size
     
