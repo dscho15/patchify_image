@@ -58,9 +58,14 @@ def combine_tensor_patches(
     patches = patches.flatten(2, 3).flatten(-2, -1)
     patches = patches.permute(0, 1, 3, 2)
     patches = patches.flatten(1, 2)
-    patches = F.fold(patches, output_size=size_after_padding, kernel_size=window_size, stride=stride)
+    
+    folded = F.fold(patches, output_size=size_after_padding, kernel_size=window_size, stride=stride)
+    counts = F.fold(torch.ones_like(patches), output_size=size_after_padding, kernel_size=window_size, stride=stride)
+
 
     (h, w) = original_size
-    patches = patches[:, :, :h, :w]
     
-    return patches
+    folded = folded / counts
+    folded = folded[:, :, :h, :w]
+    
+    return folded
